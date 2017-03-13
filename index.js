@@ -34,7 +34,7 @@ LEDAccessory.prototype.getHue = function(callback) {
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getHue") {
             //callback(message.split(":")[1]);
-            callback(0);
+            callback(null, 0);
         }
     });
 }
@@ -51,7 +51,7 @@ LEDAccessory.prototype.getPowerState = function(callback) {
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getPow") {
             //callback(message.split(":")[1]);
-            callback(0);
+            callback(null, 0);
         }
     });
 }
@@ -68,7 +68,7 @@ LEDAccessory.prototype.getSaturation = function(callback) {
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getSat") {
             //callback(message.split(":")[1]);
-            callback(0);
+            callback(null, 0);
         }
     });
 }
@@ -85,7 +85,7 @@ LEDAccessory.prototype.getBrightness = function(callback) {
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getBri") {
             //callback(message.split(":")[1]);
-            callback(0);
+            callback(null, 0);
         }
     });
 }
