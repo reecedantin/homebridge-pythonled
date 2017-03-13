@@ -1,7 +1,7 @@
 var Service;
 var Characteristic;
 var PythonShell = require('python-shell');
-var pyshell = new PythonShell('/usr/local/lib/node_modules/homebridge-pythonled/echo_text.py');
+var pyshell = new PythonShell('/../../../../../../../../../../../../../usr/local/lib/node_modules/homebridge-pythonled/echo_text.py');
 
 var net = require('net');
 
