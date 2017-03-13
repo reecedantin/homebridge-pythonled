@@ -121,5 +121,5 @@ LEDAccessory.prototype.getServices = function() {
         .on('set', this.setBrightness.bind(this))
         .on('get', this.getBrightness.bind(this));
 
-    return [informationService, switchService];
+    return [informationService, lightbulbService];
 }
