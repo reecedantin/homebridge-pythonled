@@ -1,5 +1,7 @@
-import sys, json
+import sys
 
-# simple JSON echo script
-for line in sys.stdin:
-  print line[:-1]
+while True:
+    line = raw_input()    # Read a line from file
+    print(line)
+
+sys.stdin = sys.__stdin__    # Reset the stdin to its default value
