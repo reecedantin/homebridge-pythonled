@@ -30,9 +30,10 @@ function LEDAccessory(log, config) {
 }
 
 LEDAccessory.prototype.setHue = function(hue, callback) {
+    var accessory = this;
     console.log('setHue:' + hue);
     currentHue = hue;
-    this.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback()).bind(this);
 }
 
 LEDAccessory.prototype.getHue = function(callback) {
@@ -40,6 +41,7 @@ LEDAccessory.prototype.getHue = function(callback) {
 }
 
 LEDAccessory.prototype.setPowerState = function(state, callback) {
+    var accessory = this;
     console.log("setPow:" + state);
     if(currentPow != state) {
         if(state) {
@@ -48,7 +50,7 @@ LEDAccessory.prototype.setPowerState = function(state, callback) {
             currentLev = 0;
         }
         currentPow = state;
-        this.sendRGB(callback()).bind(this);
+        accessory.sendRGB(callback()).bind(this);
     } else {
         callback();
     }
@@ -59,9 +61,10 @@ LEDAccessory.prototype.getPowerState = function(callback) {
 }
 
 LEDAccessory.prototype.setSaturation = function(saturation, callback) {
+    var accessory = this;
     console.log("setSat:" + saturation);
     currentSat = saturation;
-    this.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback()).bind(this);
 }
 
 LEDAccessory.prototype.getSaturation = function(callback) {
@@ -69,9 +72,10 @@ LEDAccessory.prototype.getSaturation = function(callback) {
 }
 
 LEDAccessory.prototype.setBrightness = function(brightness, callback) {
+    var accessory = this;
     console.log("setBri:" + brightness);
     currentLev = brightness;
-    this.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback()).bind(this);
 }
 
 LEDAccessory.prototype.getBrightness = function(callback) {
