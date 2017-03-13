@@ -1,5 +1,5 @@
-  {
-  "name": "homebridge-sharptv",
+{
+  "name": "homebridge-pythonled",
   "version": "0.0.1",
   "description": "Python LED strip plugin for Homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
@@ -18,5 +18,6 @@
     "url": "git://github.com/reecedantin/homebridge-pythonled.git"
   },
   "dependencies": {
+    "python-shell": "^0.4.0"
   }
 }

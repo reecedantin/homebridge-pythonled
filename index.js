@@ -1,7 +1,19 @@
 var Service;
 var Characteristic;
+var PythonShell = require('python-shell');
+var pyshell = new PythonShell('echo_text.py');
 
 var net = require('net');
+
+pyshell.on('message', function (message) {
+  console.log(message);
+});
+
+
+pyshell.end(function (err) {
+  if (err) throw err;
+  console.log('finished');
+});
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
@@ -17,35 +29,67 @@ function LEDAccessory(log, config) {
 }
 
 LEDAccessory.prototype.setHue = function(hue, callback) {
+    var message = "sethue:" + hue;
+    pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getHue = function(callback) {
-    callback(0);
+    var message = "gethue:" + hue;
+    pyshell.send(message);
+    pyshell.on('message', function (message) {
+        if(message.split(":")[0] === "gethue") {
+            callback(message.split(":")[1]);
+        }
+    });
 }
 
 LEDAccessory.prototype.setPowerState = function(state, callback) {
+    var message = "setPowerState:" + hue;
+    pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getPowerState = function(callback) {
-    callback(0);
+    var message = "getPowerState:" + hue;
+    pyshell.send(message);
+    pyshell.on('message', function (message) {
+        if(message.split(":")[0] === "getPowerState") {
+            callback(message.split(":")[1]);
+        }
+    });
 }
 
 LEDAccessory.prototype.setSaturation = function(saturation, callback) {
+    var message = "setSaturation:" + hue;
+    pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getSaturation = function(callback) {
-    callback(0);
+    var message = "getSaturation:" + hue;
+    pyshell.send(message);
+    pyshell.on('message', function (message) {
+        if(message.split(":")[0] === "getSaturation") {
+            callback(message.split(":")[1]);
+        }
+    });
 }
 
 LEDAccessory.prototype.setBrightness = function(brightness, callback) {
+    var message = "setBrightness:" + hue;
+    pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getBrightness = function(callback) {
-    callback(0);
+    var message = "getBrightness:" + hue;
+    pyshell.send(message);
+    pyshell.on('message', function (message) {
+        if(message.split(":")[0] === "getBrightness") {
+            callback(message.split(":")[1]);
+        }
+    });
 }
 
 LEDAccessory.prototype.getServices = function() {
