@@ -29,7 +29,7 @@ LEDAccessory.prototype.setHue = function(hue, callback) {
 }
 
 LEDAccessory.prototype.getHue = function(callback) {
-    var message = "gethue:" + hue;
+    var message = "gethue";
     pyshell.send(message);
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "gethue") {
@@ -39,13 +39,13 @@ LEDAccessory.prototype.getHue = function(callback) {
 }
 
 LEDAccessory.prototype.setPowerState = function(state, callback) {
-    var message = "setPowerState:" + hue;
+    var message = "setPowerState:" + state;
     pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getPowerState = function(callback) {
-    var message = "getPowerState:" + hue;
+    var message = "getPowerState";
     pyshell.send(message);
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getPowerState") {
@@ -55,13 +55,13 @@ LEDAccessory.prototype.getPowerState = function(callback) {
 }
 
 LEDAccessory.prototype.setSaturation = function(saturation, callback) {
-    var message = "setSaturation:" + hue;
+    var message = "setSaturation:" + saturation;
     pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getSaturation = function(callback) {
-    var message = "getSaturation:" + hue;
+    var message = "getSaturation";
     pyshell.send(message);
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getSaturation") {
@@ -71,13 +71,13 @@ LEDAccessory.prototype.getSaturation = function(callback) {
 }
 
 LEDAccessory.prototype.setBrightness = function(brightness, callback) {
-    var message = "setBrightness:" + hue;
+    var message = "setBrightness:" + brightness;
     pyshell.send(message);
     callback();
 }
 
 LEDAccessory.prototype.getBrightness = function(callback) {
-    var message = "getBrightness:" + hue;
+    var message = "getBrightness";
     pyshell.send(message);
     pyshell.on('message', function (message) {
         if(message.split(":")[0] === "getBrightness") {
