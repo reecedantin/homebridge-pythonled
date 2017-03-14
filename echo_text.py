@@ -18,3 +18,4 @@ if __name__ == '__main__':
         for i in range(strip.numPixels()):
                 strip.setPixelColor(i, Color(sys.argv[1],sys.argv[2],sys.argv[3]))
         strip.show()
+        print "success"

@@ -33,7 +33,7 @@ LEDAccessory.prototype.setHue = function(hue, callback) {
     var accessory = this;
     console.log('setHue:' + hue);
     currentHue = hue;
-    accessory.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback());
 }
 
 LEDAccessory.prototype.getHue = function(callback) {
@@ -50,7 +50,7 @@ LEDAccessory.prototype.setPowerState = function(state, callback) {
             currentLev = 0;
         }
         currentPow = state;
-        accessory.sendRGB(callback()).bind(this);
+        accessory.sendRGB(callback());
     } else {
         callback();
     }
@@ -64,7 +64,7 @@ LEDAccessory.prototype.setSaturation = function(saturation, callback) {
     var accessory = this;
     console.log("setSat:" + saturation);
     currentSat = saturation;
-    accessory.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback());
 }
 
 LEDAccessory.prototype.getSaturation = function(callback) {
@@ -75,7 +75,7 @@ LEDAccessory.prototype.setBrightness = function(brightness, callback) {
     var accessory = this;
     console.log("setBri:" + brightness);
     currentLev = brightness;
-    accessory.sendRGB(callback()).bind(this);
+    accessory.sendRGB(callback());
 }
 
 LEDAccessory.prototype.getBrightness = function(callback) {
@@ -113,10 +113,11 @@ LEDAccessory.prototype.sendRGB = function(callback) {
       mode: 'text',
       args: [Math.round(g * 255), Math.round(r * 255), Math.round(b * 255)]
     };
-
+    console.log([Math.round(g * 255), Math.round(r * 255), Math.round(b * 255)])
     PythonShell.run(pyLoc, options, function (err, results) {
       if (err) throw err;
       // results is an array consisting of messages collected during execution
+      console.log(results);
       callback();
     });
 }
