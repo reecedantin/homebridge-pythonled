@@ -250,7 +250,7 @@ LEDSpeed.prototype.setPowerState = function(state, callback) {
 
 LEDSpeed.prototype.getPowerState = function(callback) {
     var accessory = this;
-    callback(null, abs(speed) > 0);
+    callback(null, Math.abs(speed) > 0);
 }
 
 LEDSpeed.prototype.setSpeed = function(state, callback) {
@@ -266,7 +266,7 @@ LEDSpeed.prototype.setSpeed = function(state, callback) {
 
 LEDSpeed.prototype.getSpeed = function(callback) {
     var accessory = this;
-    callback(null, abs(speed));
+    callback(null, Math.abs(speed));
 }
 
 LEDSpeed.prototype.setDirection = function(state, callback) {
@@ -300,7 +300,7 @@ LEDSpeed.prototype.getServices = function() {
         .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
 
     fanService
-        .addCharacteristic(Characteristic.On)
+        .getCharacteristic(Characteristic.On)
         .on('set', this.setPowerState.bind(this))
         .on('get', this.getPowerState.bind(this));
 
@@ -367,9 +367,66 @@ LEDFunction.prototype.getServices = function() {
         .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
 
     switchService
-        .addCharacteristic(Characteristic.On)
+        .getCharacteristic(Characteristic.On)
         .on('set', this.setPowerState.bind(this))
         .on('get', this.getPowerState.bind(this));
 
     return [informationService, switchService];
+}
+
+
+function LEDCount(log, name) {
+    this.log = log;
+    this.service = 'Dimmer';
+    this.name = name;
+
+    var id = uuid.generate('dimmer.' + this.name);
+    Accessory.call(this, this.name, id);
+    this.uuid_base = id;
+}
+
+LEDCount.prototype.setPowerState = function(state, callback) {
+    var accessory = this;
+    accessory.log(accessory.name + " setPow: " + state);
+    count = 100 * state;
+    callback(null);
+}
+
+LEDCount.prototype.getPowerState = function(callback) {
+    var accessory = this;
+    callback(null, count > 0);
+}
+
+LEDCount.prototype.getValue = function(callback) {
+    callback(null, count);
+}
+
+LEDCount.prototype.setValue = function(state, callback) {
+    var accessory = this;
+    accessory.log(accessory.name + " setBri: " + state);
+    count = state;
+    callback(null);
+}
+
+
+LEDCount.prototype.getServices = function() {
+    var informationService = new Service.AccessoryInformation();
+    var dimmerService = new Service.Lightbulb(this.name);
+
+    informationService
+        .setCharacteristic(Characteristic.Manufacturer, 'LED Manufacturer')
+        .setCharacteristic(Characteristic.Model, 'LED Model')
+        .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
+
+    dimmerService
+        .getCharacteristic(Characteristic.On)
+        .on('set', this.setPowerState.bind(this))
+        .on('get', this.getPowerState.bind(this));
+
+    dimmerService
+        .addCharacteristic(Characteristic.Brightness)
+        .on('set', this.setValue.bind(this))
+        .on('get', this.getValue.bind(this));
+
+    return [informationService, dimmerService];
 }
