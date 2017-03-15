@@ -64,13 +64,13 @@ setInterval(function () {
         for (var i = 18; i < NUM_LEDS-16; i++) {
           pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
         }
-        offset = (offset + (5 * speed/100)) % 360;
+        offset = (offset + (10 * speed/100)) % 360;
         break;
     }
     case 1:
     {
         for (var i = 18; i < NUM_LEDS-16; i++) {
-          pixelData[i] = hsl2Int(currentHue[0], currentSat[0], currentLev[0]);
+          pixelData[i] = hsl2Int(currentHue[0]/360, currentSat[0]/100, currentLev[0]/100);
         }
         break;
     }
@@ -78,22 +78,34 @@ setInterval(function () {
         {
             var hue1 = currentHue[0];
             var hue2 = currentHue[1];
-            var newHue = hue1
+            var sat1 = currentSat[0];
+            var sat2 = currentSat[1];
+            var lev1 = currentLev[0];
+            var lev2 = currentLev[1];
+            var newHue = hue1;
+            var newSat = sat1;
+            var newLev = lev1;
             var countem = offset % count*2;
             for (var i = 18; i < NUM_LEDS-16; i++) {
                 if(countem <= count) {
                     newHue = hue1;
+                    newSat = sat1;
+                    newLev = lev1;
                 } else if(countem <= count*2) {
                     newHue = hue2;
+                    newSat = sat1;
+                    newLev = lev1;
                 } else {
                     newHue = hue1;
+                    newSat = sat1;
+                    newLev = lev1;
                     countem = 0;
                 }
                 countem++;
-                pixelData[i] = hsl2Int(newHue/360, 1, 1);
+                pixelData[i] = hsl2Int(newHue/360, newSat/100, newLev/100);
             }
             //console.log((hue2 + ((hue1 - hue2) * (((0.0/NUM_LEDS - 0.5)*2.0)^8.0))));
-            offset = (offset + (5 * speed/100)) % NUM_LEDS;
+            offset = (offset + (10 * speed/100)) % NUM_LEDS;
             //console.log(offset);
             break;
         }
@@ -245,6 +257,7 @@ function LEDSpeed(log, name) {
 LEDSpeed.prototype.setPowerState = function(state, callback) {
     var accessory = this;
     accessory.log(accessory.name + " setPow: " + state);
+
     callback(null)
 }
 
