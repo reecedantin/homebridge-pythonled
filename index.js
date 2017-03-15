@@ -39,6 +39,7 @@ LEDPlatform.prototype.accessories = function (callback) {
     results.push(new LEDFunction(this.log, "Rainbow", 0));
     results.push(new LEDFunction(this.log, "One Color", 1));
     results.push(new LEDFunction(this.log, "Two Colors", 2));
+    results.push(new LEDCount(this.log, "Count"));
     callback(results);
 }
 
@@ -64,7 +65,7 @@ setInterval(function () {
         for (var i = 18; i < NUM_LEDS-16; i++) {
           pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
         }
-        offset = (offset + (10 * speed/100)) % 360;
+        offset = (offset + (15 * speed/100)) % 360;
         break;
     }
     case 1:
@@ -105,7 +106,7 @@ setInterval(function () {
                 pixelData[i] = hsl2Int(newHue/360, newSat/100, newLev/100);
             }
             //console.log((hue2 + ((hue1 - hue2) * (((0.0/NUM_LEDS - 0.5)*2.0)^8.0))));
-            offset = (offset + (10 * speed/100)) % NUM_LEDS;
+            offset = (offset + (20 * speed/100)) % NUM_LEDS;
             //console.log(offset);
             break;
         }
