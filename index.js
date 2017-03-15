@@ -1,93 +1,111 @@
-var Service;
-var Characteristic;
-var PythonShell = require('python-shell');
-var pyLoc = '/../../../../../../../../../../../../../usr/local/lib/node_modules/homebridge-pythonled/echo_text.py';
+var Service, Characteristic, Accessory, uuid;
+var inherits = require('util').inherits;
+var extend = require('util')._extend;
+var ws281x = require('rpi-ws281x-native');
 
-var net = require('net');
 
-var currentHue = 0;
-var currentSat = 0;
-var currentLev = 0;
+/* Register the plugin with homebridge */
+module.exports = function (homebridge) {
+    Service = homebridge.hap.Service;
+    Characteristic = homebridge.hap.Characteristic;
+    Accessory = homebridge.hap.Accessory;
+    uuid = homebridge.hap.uuid;
 
-var currentPow = 0;
-
-var currentG = 0;
-var currentR = 0;
-var currentB = 0;
-
-module.exports = function(homebridge) {
-  Service = homebridge.hap.Service;
-  Characteristic = homebridge.hap.Characteristic;
-
-  homebridge.registerAccessory("homebridge-pythonled", "LED Strip", LEDAccessory);
-}
-
-function LEDAccessory(log, config) {
-  this.log = log;
-  this.service = 'Light';
-  this.name = config['name'];
-  this.pyLoc = config['pythonLocation']
-}
-
-LEDAccessory.prototype.setHue = function(hue, callback) {
-    var accessory = this;
-    console.log('setHue:' + hue);
-    currentHue = hue;
-    accessory.sendRGB(callback());
-}
-
-LEDAccessory.prototype.getHue = function(callback) {
-    callback(null, currentHue);
-}
-
-LEDAccessory.prototype.setPowerState = function(state, callback) {
-    var accessory = this;
-    console.log("setPow:" + state);
-    if(currentPow != state) {
-        if(state) {
-            currentLev = 100;
-        } else {
-            currentLev = 0;
-        }
-        currentPow = state;
-        accessory.sendRGB(callback());
-    } else {
-        callback();
+    var acc = LEDAccessory.prototype;
+    inherits(LEDAccessory, Accessory);
+    LEDAccessory.prototype.parent = Accessory.prototype;
+    for (var mn in acc) {
+        LEDAccessory.prototype[mn] = acc[mn];
     }
+
+    homebridge.registerPlatform("homebridge-pythonled", "LED Strip", LEDPlatform);
+    //homebridge.registerAccessory("homebridge-hdmi-matrix", "HDMIMatrix",MatrixAccessory);
 }
 
-LEDAccessory.prototype.getPowerState = function(callback) {
-    callback(null, currentPow);
+function LEDPlatform(log, config) {
+    this.log = log;
+    this.devices = config.devices;
 }
 
-LEDAccessory.prototype.setSaturation = function(saturation, callback) {
-    var accessory = this;
-    console.log("setSat:" + saturation);
-    currentSat = saturation;
-    accessory.sendRGB(callback());
+LEDPlatform.prototype.accessories = function (callback) {
+    var results = [];
+    results.push(new LEDAccessory(this.log, "Bulb1", currentHue1, currentSat1, currentLev1, currentPow1));
+    results.push(new LEDAccessory(this.log, "Bulb2", currentHue2, currentSat2, currentLev2, currentPow2));
+    callback(results);
 }
 
-LEDAccessory.prototype.getSaturation = function(callback) {
-    callback(null, currentSat);
+
+var NUM_LEDS = 300;
+var pixelData = new Uint32Array(NUM_LEDS);
+
+ws281x.init(NUM_LEDS);
+
+// ---- trap the SIGINT and reset before exit
+process.on('SIGINT', function () {
+  ws281x.reset();
+  process.nextTick(function () { process.exit(0); });
+});
+
+
+// ---- animation-loop
+var offset = 0;
+setInterval(function () {
+  switch(setting){
+    case 0:
+    {
+        for (var i = 18; i < NUM_LEDS-16; i++) {
+          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
+        }
+        offset = (offset + (5 * speed/100)) % 360;
+        break;
+    }
+    case 1:
+    {
+        for (var i = 18; i < NUM_LEDS-16; i++) {
+          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
+        }
+        offset = (offset + (5 * speed/100)) % 360;
+        break;
+    }
+    case 2: //2 colors move
+        {
+            var hue1 = 0.0;
+            var hue2 = 270.0;
+            var newHue = hue1
+            var countem = offset % count*2;
+            for (var i = 18; i < NUM_LEDS-16; i++) {
+                if(countem <= count) {
+                    newHue = hue1;
+                } else if(countem <= count*2) {
+                    newHue = hue2;
+                } else {
+                    newHue = hue1;
+                    countem = 0;
+                }
+                countem++;
+                pixelData[i] = hsl2Int(newHue/360, 1, 1);
+            }
+            //console.log((hue2 + ((hue1 - hue2) * (((0.0/NUM_LEDS - 0.5)*2.0)^8.0))));
+            offset = (offset + (5 * speed/100)) % NUM_LEDS;
+            //console.log(offset);
+            break;
+        }
+  }
+
+  ws281x.render(pixelData);
+}, 1000 / 60);
+
+
+console.log('lights started');
+
+
+function rgb2Int(r, g, b) {
+  return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 }
 
-LEDAccessory.prototype.setBrightness = function(brightness, callback) {
-    var accessory = this;
-    console.log("setBri:" + brightness);
-    currentLev = brightness;
-    accessory.sendRGB(callback());
-}
-
-LEDAccessory.prototype.getBrightness = function(callback) {
-    callback(null, currentLev);
-}
-
-LEDAccessory.prototype.sendRGB = function(callback) {
-
+function hsl2Int(h,s,l) {
     var r, g, b;
-    var h = currentHue/360;
-    var s = currentSat/100;
-    var l = currentLev/100;
+    l = l/2;
 
     if(s == 0){
         r = g = b = l; // achromatic
@@ -108,18 +126,78 @@ LEDAccessory.prototype.sendRGB = function(callback) {
         b = hue2rgb(p, q, h - 1/3);
     }
 
+    return rgb2Int(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
+}
 
-    var options = {
-      mode: 'text',
-      args: [Math.round(g * 255), Math.round(r * 255), Math.round(b * 255)]
-    };
-    console.log([Math.round(g * 255), Math.round(r * 255), Math.round(b * 255)])
-    PythonShell.run(pyLoc, options, function (err, results) {
-      if (err) throw err;
-      // results is an array consisting of messages collected during execution
-      console.log(results);
-      callback();
-    });
+var currentHue1 = 0;
+var currentSat1 = 0;
+var currentLev1 = 0;
+
+var currentHue2 = 0;
+var currentSat2 = 0;
+var currentLev2 = 0;
+
+var currentPow1 = 0;
+var currentPow2 = 0;
+
+
+var setting = 2;
+var count = 100;
+var speed = 100;
+
+
+function LEDAccessory(log, name, hue, sat, lev, pow) {
+    this.log = log;
+    this.service = 'Light';
+    this.name = name;
+    this.hue = hue;
+    this.sat = sat;
+    this.lev = lev;
+    this.pow = pow;
+}
+
+LEDAccessory.prototype.setHue = function(hue, callback) {
+    var accessory = this;
+    console.log(name + ' setHue:' + hue);
+    accessory.hue = hue;
+}
+
+LEDAccessory.prototype.getHue = function(callback) {
+    var accessory = this;
+    callback(null, accessory.hue);
+}
+
+LEDAccessory.prototype.setPowerState = function(state, callback) {
+    var accessory = this;
+    console.log("setPow:" + state);
+    callback();
+}
+
+LEDAccessory.prototype.getPowerState = function(callback) {
+    var accessory = this;
+    callback(null, accessory.pow);
+}
+
+LEDAccessory.prototype.setSaturation = function(saturation, callback) {
+    var accessory = this;
+    console.log(name + ' setSat:' + saturation);
+    accessory.sat = saturation;
+}
+
+LEDAccessory.prototype.getSaturation = function(callback) {
+    var accessory = this;
+    callback(null, accessory.sat);
+}
+
+LEDAccessory.prototype.setBrightness = function(brightness, callback) {
+    var accessory = this;
+    console.log(name + ' setBri:' + brightness);
+    accessory.lev = brightness;
+}
+
+LEDAccessory.prototype.getBrightness = function(callback) {
+    var accessory = this;
+    callback(null, accessory.lev);
 }
 
 LEDAccessory.prototype.getServices = function() {
