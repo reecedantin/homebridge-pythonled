@@ -63,7 +63,7 @@ setInterval(function () {
     case 0:
     {
         for (var i = 18; i < NUM_LEDS-16; i++) {
-          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
+          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, currentLev[0]);
         }
         offset = (offset + (15 * speed/100)) % 360;
         break;
