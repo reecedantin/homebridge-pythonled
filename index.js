@@ -274,6 +274,7 @@ LEDSpeed.prototype.setSpeed = function(state, callback) {
     } else {
         speed = state;
     }
+    offset = 0;
     callback(null)
 }
 
@@ -288,6 +289,7 @@ LEDSpeed.prototype.setDirection = function(state, callback) {
     if(state == (speed < 0)) {
         speed = speed * -1;
     }
+    offset = 0;
     callback(null)
 }
 
@@ -416,6 +418,7 @@ LEDCount.prototype.setValue = function(state, callback) {
     var accessory = this;
     accessory.log(accessory.name + " setBri: " + state);
     count = state;
+    offset = 0;
     callback(null);
 }
 
