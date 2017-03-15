@@ -94,8 +94,8 @@ setInterval(function () {
                     newLev = lev1;
                 } else if(countem <= count*2) {
                     newHue = hue2;
-                    newSat = sat1;
-                    newLev = lev1;
+                    newSat = sat2;
+                    newLev = lev2;
                 } else {
                     newHue = hue1;
                     newSat = sat1;
