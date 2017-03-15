@@ -62,15 +62,14 @@ setInterval(function () {
     case 1:
     {
         for (var i = 18; i < NUM_LEDS-16; i++) {
-          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, 1);
+          pixelData[i] = hsl2Int(currentHue1, currentSat1, currentLev1);
         }
-        offset = (offset + (5 * speed/100)) % 360;
         break;
     }
     case 2: //2 colors move
         {
-            var hue1 = 0.0;
-            var hue2 = 270.0;
+            var hue1 = currentHue1;
+            var hue2 = currentHue2;
             var newHue = hue1
             var countem = offset % count*2;
             for (var i = 18; i < NUM_LEDS-16; i++) {
