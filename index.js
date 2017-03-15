@@ -250,7 +250,6 @@ function LEDSpeed(log, name) {
     this.name = name;
 
     var id = uuid.generate('fan.' + this.name);
-    Accessory.call(this, this.name, id);
     this.uuid_base = id;
 }
 
@@ -338,7 +337,6 @@ function LEDFunction(log, name, value) {
     this.selfSet = false;
 
     var id = uuid.generate('function.' + this.name);
-    Accessory.call(this, this.name, id);
     this.uuid_base = id;
 
     myEmitter.on('event', (data) => {
@@ -394,7 +392,6 @@ function LEDCount(log, name) {
     this.name = name;
 
     var id = uuid.generate('dimmer.' + this.name);
-    Accessory.call(this, this.name, id);
     this.uuid_base = id;
 }
 
