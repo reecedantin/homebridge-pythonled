@@ -29,8 +29,8 @@ function LEDPlatform(log, config) {
 
 LEDPlatform.prototype.accessories = function (callback) {
     var results = [];
-    results.push(new LEDAccessory(this.log, "Bulb1", currentHue1, currentSat1, currentLev1, currentPow1));
-    results.push(new LEDAccessory(this.log, "Bulb2", currentHue2, currentSat2, currentLev2, currentPow2));
+    results.push(new LEDAccessory(this.log, "Bulb1", 0));
+    results.push(new LEDAccessory(this.log, "Bulb2", 1));
     callback(results);
 }
 
@@ -62,14 +62,14 @@ setInterval(function () {
     case 1:
     {
         for (var i = 18; i < NUM_LEDS-16; i++) {
-          pixelData[i] = hsl2Int(currentHue1, currentSat1, currentLev1);
+          pixelData[i] = hsl2Int(currentHue[0], currentSat[0], currentLev[0]);
         }
         break;
     }
     case 2: //2 colors move
         {
-            var hue1 = currentHue1;
-            var hue2 = currentHue2;
+            var hue1 = currentHue[0];
+            var hue2 = currentHue[1];
             var newHue = hue1
             var countem = offset % count*2;
             for (var i = 18; i < NUM_LEDS-16; i++) {
@@ -128,43 +128,33 @@ function hsl2Int(h,s,l) {
     return rgb2Int(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
 }
 
-var currentHue1 = 0;
-var currentSat1 = 0;
-var currentLev1 = 0;
-
-var currentHue2 = 0;
-var currentSat2 = 0;
-var currentLev2 = 0;
-
-var currentPow1 = 0;
-var currentPow2 = 0;
-
+var currentHue = [0,0];
+var currentSat = [0,0];
+var currentLev = [0,0];
+var currentPow = [0,0];
 
 var setting = 2;
 var count = 100;
 var speed = 100;
 
 
-function LEDAccessory(log, name, hue, sat, lev, pow) {
+function LEDAccessory(log, name, index) {
     this.log = log;
     this.service = 'Light';
     this.name = name;
-    this.hue = hue;
-    this.sat = sat;
-    this.lev = lev;
-    this.pow = pow;
+    this.index = index;
 }
 
 LEDAccessory.prototype.setHue = function(hue, callback) {
     var accessory = this;
     accessory.log(accessory.name + ' setHue:' + hue);
-    accessory.hue = hue;
+    currentHue[accessory.index] = hue;
     callback(null)
 }
 
 LEDAccessory.prototype.getHue = function(callback) {
     var accessory = this;
-    callback(null, accessory.hue);
+    callback(null, currentHue[accessory.index]);
 }
 
 LEDAccessory.prototype.setPowerState = function(state, callback) {
@@ -175,31 +165,31 @@ LEDAccessory.prototype.setPowerState = function(state, callback) {
 
 LEDAccessory.prototype.getPowerState = function(callback) {
     var accessory = this;
-    callback(null, accessory.pow);
+    callback(null, currentPow[accessory.index]);
 }
 
 LEDAccessory.prototype.setSaturation = function(saturation, callback) {
     var accessory = this;
     accessory.log(accessory.name + ' setSat:' + saturation);
-    accessory.sat = saturation;
+    currentSat[accessory.index] = saturation;
     callback(null)
 }
 
 LEDAccessory.prototype.getSaturation = function(callback) {
     var accessory = this;
-    callback(null, accessory.sat);
+    callback(null, currentSat[accessory.index]);
 }
 
 LEDAccessory.prototype.setBrightness = function(brightness, callback) {
     var accessory = this;
     accessory.log(accessory.name + ' setBri:' + brightness);
-    accessory.lev = brightness;
+    currentLev[accessory.index] = brightness;
     callback(null)
 }
 
 LEDAccessory.prototype.getBrightness = function(callback) {
     var accessory = this;
-    callback(null, accessory.lev);
+    callback(null, currentLev[accessory.index]);
 }
 
 LEDAccessory.prototype.getServices = function() {
