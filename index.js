@@ -31,6 +31,7 @@ LEDPlatform.prototype.accessories = function (callback) {
     var results = [];
     results.push(new LEDAccessory(this.log, "Bulb1", 0));
     results.push(new LEDAccessory(this.log, "Bulb2", 1));
+    results.push(new LEDSpeed(this.log, "Speed"));
     callback(results);
 }
 
@@ -137,7 +138,6 @@ var setting = 2;
 var count = 100;
 var speed = 100;
 
-
 function LEDAccessory(log, name, index) {
     this.log = log;
     this.service = 'Light';
@@ -160,6 +160,7 @@ LEDAccessory.prototype.getHue = function(callback) {
 LEDAccessory.prototype.setPowerState = function(state, callback) {
     var accessory = this;
     accessory.log("setPow:" + state);
+    currentPow[accessory.index] = state;
     callback(null)
 }
 
@@ -222,4 +223,85 @@ LEDAccessory.prototype.getServices = function() {
         .on('get', this.getBrightness.bind(this));
 
     return [informationService, lightbulbService];
+}
+
+function LEDSpeed(log, name) {
+    this.log = log;
+    this.service = 'Fan';
+    this.name = name;
+}
+
+LEDSpeed.prototype.setPowerState = function(state, callback) {
+    var accessory = this;
+    accessory.log(accessory.name + " setPow: " + state);
+    callback(null)
+}
+
+LEDSpeed.prototype.getPowerState = function(callback) {
+    var accessory = this;
+    callback(null, abs(speed) > 0);
+}
+
+LEDSpeed.prototype.setSpeed = function(state, callback) {
+    var accessory = this;
+    accessory.log(accessory.name + " setSpeed: " + state);
+    if(speed < 0) {
+        speed = state * -1;
+    } else {
+        speed = state;
+    }
+    callback(null)
+}
+
+LEDSpeed.prototype.getSpeed = function(callback) {
+    var accessory = this;
+    callback(null, abs(speed));
+}
+
+LEDSpeed.prototype.setDirection = function(state, callback) {
+    var accessory = this;
+    accessory.log(accessory.name + " setDirection: " + state);
+    if(state == (speed < 0)) {
+        speed = speed * -1;
+    }
+    callback(null)
+}
+
+LEDSpeed.prototype.getDirection = function(callback) {
+    var accessory = this;
+    var currentDirection;
+    if (speed < 0){
+        currentDirection = Characteristic.RotationDirection.CLOCKWISE;
+    } else {
+        currentDirection = Characteristic.RotationDirection.COUNTER_CLOCKWISE;
+    }
+    callback(null, currentDirection);
+}
+
+
+LEDSpeed.prototype.getServices = function() {
+    var informationService = new Service.AccessoryInformation();
+    var fanService = new Service.Fan(this.name);
+
+    informationService
+        .setCharacteristic(Characteristic.Manufacturer, 'LED Manufacturer')
+        .setCharacteristic(Characteristic.Model, 'LED Model')
+        .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
+
+    fanService
+        .addCharacteristic(Characteristic.On)
+        .on('set', this.setPowerState.bind(this))
+        .on('get', this.getPowerState.bind(this));
+
+    fanService
+        .addCharacteristic(Characteristic.RotationSpeed)
+        .on('set', this.setSpeed.bind(this))
+        .on('get', this.getSpeed.bind(this));
+
+    fanService
+        .getCharacteristic(Characteristic.RotationDirection)
+        .on('set', this.setDirection.bind(this))
+        .on('get', this.getDirection.bind(this));
+
+    return [informationService, fanService];
 }
