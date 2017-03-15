@@ -2,6 +2,10 @@ var Service, Characteristic, Accessory, uuid;
 var inherits = require('util').inherits;
 var extend = require('util')._extend;
 var ws281x = require('rpi-ws281x-native');
+const EventEmitter = require('events');
+
+class MyEmitter extends EventEmitter {}
+const myEmitter = new MyEmitter();
 
 
 /* Register the plugin with homebridge */
@@ -32,6 +36,9 @@ LEDPlatform.prototype.accessories = function (callback) {
     results.push(new LEDAccessory(this.log, "Bulb1", 0));
     results.push(new LEDAccessory(this.log, "Bulb2", 1));
     results.push(new LEDSpeed(this.log, "Speed"));
+    results.push(new LEDFunction(this.log, "Rainbow", 0));
+    results.push(new LEDFunction(this.log, "One Color", 1));
+    results.push(new LEDFunction(this.log, "Two Colors", 2));
     callback(results);
 }
 
@@ -229,6 +236,10 @@ function LEDSpeed(log, name) {
     this.log = log;
     this.service = 'Fan';
     this.name = name;
+
+    var id = uuid.generate('fan.' + this.name);
+    Accessory.call(this, this.name, id);
+    this.uuid_base = id;
 }
 
 LEDSpeed.prototype.setPowerState = function(state, callback) {
@@ -304,4 +315,61 @@ LEDSpeed.prototype.getServices = function() {
         .on('get', this.getDirection.bind(this));
 
     return [informationService, fanService];
+}
+
+function LEDFunction(log, name, value) {
+    this.log = log;
+    this.service = 'Switch';
+    this.name = name;
+    this.value = value;
+    this.selfSet = false;
+
+    var id = uuid.generate('function.' + this.name);
+    Accessory.call(this, this.name, id);
+    this.uuid_base = id;
+
+    myEmitter.on('event', (data) => {
+        this.selfSet = true;
+        if(this.value == data) {
+          this.getServices()[1].getCharacteristic(Characteristic.On).setValue(true);
+        } else {
+          this.getServices()[1].getCharacteristic(Characteristic.On).setValue(true);
+        }
+    });
+    myEmitter.emit('event');
+}
+
+LEDFunction.prototype.setPowerState = function(state, callback) {
+    var accessory = this;
+    if(accessory.selfSet){
+        accessory.selfSet = false;
+        callback(null);
+        return;
+    }
+    accessory.log(accessory.name + " setPow: " + state);
+    setting = accessory.value;
+    myEmitter.emit('event', accessory.value);
+    callback(null);
+}
+
+LEDFunction.prototype.getPowerState = function(callback) {
+    var accessory = this;
+    callback(null, setting === accessory.value);
+}
+
+LEDFunction.prototype.getServices = function() {
+    var informationService = new Service.AccessoryInformation();
+    var switchService = new Service.Switch(this.name);
+
+    informationService
+        .setCharacteristic(Characteristic.Manufacturer, 'LED Manufacturer')
+        .setCharacteristic(Characteristic.Model, 'LED Model')
+        .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
+
+    switchService
+        .addCharacteristic(Characteristic.On)
+        .on('set', this.setPowerState.bind(this))
+        .on('get', this.getPowerState.bind(this));
+
+    return [informationService, switchService];
 }
