@@ -69,7 +69,7 @@ setInterval(function () {
     {
         var color = offset;
         for (var i = 18; i < NUM_LEDS-16; i++) {
-            pixelData[i] = hsl2Int(color/360, 1, 1);
+            pixelData[i] = hsl2Int(color/360, 1, currentLev[0]);
             color = color + count;
             if (color > 360) {
                 color = color - 360;
@@ -115,7 +115,7 @@ setInterval(function () {
   }
 
   ws281x.render(pixelData);
-}, 1000 / 60);
+}, 1000 / 100);
 
 
 console.log('lights started');
@@ -158,7 +158,7 @@ var currentPow = [];
 
 var setting = 2;
 var count = 100;
-var speed = 100;
+var speed = 1;
 
 function LEDAccessory(log, name, index) {
     this.log = log;
@@ -305,7 +305,6 @@ LEDSpeed.prototype.setSpeed = function(state, callback) {
     } else {
         speed = state;
     }
-    offset = 0;
     callback(null)
 }
 
@@ -320,7 +319,6 @@ LEDSpeed.prototype.setDirection = function(state, callback) {
     if(state == (speed < 0)) {
         speed = speed * -1;
     }
-    offset = 0;
     callback(null)
 }
 
@@ -461,7 +459,6 @@ LEDCount.prototype.setValue = function(state, callback) {
     var accessory = this;
     accessory.log(accessory.name + " setBri: " + state);
     count = state;
-    offset = 0;
     callback(null);
 }
 
