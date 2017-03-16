@@ -7,6 +7,10 @@ const EventEmitter = require('events');
 class MyEmitter extends EventEmitter {}
 const myEmitter = new MyEmitter();
 
+myEmitter.on('event', (data) => {
+    console.log("function change to: " + data);
+});
+
 
 /* Register the plugin with homebridge */
 module.exports = function (homebridge) {
@@ -35,10 +39,11 @@ LEDPlatform.prototype.accessories = function (callback) {
     var results = [];
     results.push(new LEDAccessory(this.log, "Bulb1", 0));
     results.push(new LEDAccessory(this.log, "Bulb2", 1));
+    results.push(new LEDAccessory(this.log, "Bulb3", 2));
     results.push(new LEDSpeed(this.log, "Speed"));
     results.push(new LEDFunction(this.log, "Rainbow", 0));
     results.push(new LEDFunction(this.log, "One Color", 1));
-    results.push(new LEDFunction(this.log, "Two Colors", 2));
+    results.push(new LEDFunction(this.log, "Multi Colors", 2));
     results.push(new LEDCount(this.log, "Count"));
     callback(results);
 }
@@ -62,10 +67,20 @@ setInterval(function () {
   switch(setting){
     case 0:
     {
+        var color = offset;
         for (var i = 18; i < NUM_LEDS-16; i++) {
-          pixelData[i] = hsl2Int(((i + offset) * (10 * count/100) % 360)/360, 1, currentLev[0]);
+            pixelData[i] = hsl2Int(color/360, 1, 1);
+            color = color + count;
+            if (color > 360) {
+                color = color - 360;
+            }
         }
-        offset = (offset + (15 * speed/100)) % 360;
+        offset = offset + speed;
+        if (offset > 360) {
+            offset = offset - 360;
+        } else if(offset < 0) {
+            offset = offset + 360;
+        }
         break;
     }
     case 1:
@@ -75,39 +90,26 @@ setInterval(function () {
         }
         break;
     }
-    case 2: //2 colors move
+    case 2: //3 colors move
         {
-            var hue1 = currentHue[0];
-            var hue2 = currentHue[1];
-            var sat1 = currentSat[0];
-            var sat2 = currentSat[1];
-            var lev1 = currentLev[0];
-            var lev2 = currentLev[1];
-            var newHue = hue1;
-            var newSat = sat1;
-            var newLev = lev1;
-            var countem = offset % count*2;
+            var counter = offset;
             for (var i = 18; i < NUM_LEDS-16; i++) {
-                if(countem <= count) {
-                    newHue = hue1;
-                    newSat = sat1;
-                    newLev = lev1;
-                } else if(countem <= count*2) {
-                    newHue = hue2;
-                    newSat = sat2;
-                    newLev = lev2;
-                } else {
-                    newHue = hue1;
-                    newSat = sat1;
-                    newLev = lev1;
-                    countem = 0;
+                for(light in currentPow) {
+                    if(counter > count*light && counter < count * currentPow.length){
+                        pixelData[i] = hsl2Int(currentHue[currentPow[light]]/360, currentSat[currentPow[light]]/100, currentLev[currentPow[light]]/100);
+                    }
                 }
-                countem++;
-                pixelData[i] = hsl2Int(newHue/360, newSat/100, newLev/100);
+                counter++;
+                if (counter > count*currentPow.length){
+                    counter = counter - count*currentPow.length;
+                }
             }
-            //console.log((hue2 + ((hue1 - hue2) * (((0.0/NUM_LEDS - 0.5)*2.0)^8.0))));
-            offset = (offset + (20 * speed/100)) % NUM_LEDS;
-            //console.log(offset);
+            offset = offset + speed/5;
+            if (offset > count*currentPow.length) {
+                offset = offset - count*currentPow.length;
+            } else if(offset < 0) {
+                offset = offset + count*currentPow.length;
+            }
             break;
         }
   }
@@ -149,10 +151,10 @@ function hsl2Int(h,s,l) {
     return rgb2Int(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
 }
 
-var currentHue = [0,0];
-var currentSat = [0,0];
-var currentLev = [0,0];
-var currentPow = [0,0];
+var currentHue = [];
+var currentSat = [];
+var currentLev = [];
+var currentPow = [];
 
 var setting = 2;
 var count = 100;
@@ -163,6 +165,11 @@ function LEDAccessory(log, name, index) {
     this.service = 'Light';
     this.name = name;
     this.index = index;
+
+    currentHue.push(0);
+    currentSat.push(0);
+    currentLev.push(0);
+    //currentPow.push(this.index);
 }
 
 LEDAccessory.prototype.setHue = function(hue, callback) {
@@ -181,12 +188,34 @@ LEDAccessory.prototype.setPowerState = function(state, callback) {
     var accessory = this;
     accessory.log("setPow:" + state);
     currentPow[accessory.index] = state;
+    if(state == 0) {
+        currentLev[accessory.index] = 0;
+        for(i in currentPow) {
+            if(currentPow[i] == this.index) {
+                currentPow.splice(i,1);
+            }
+        }
+    } else {
+        for(i in currentPow) {
+            if(currentPow[i] == this.index) {
+                callback(null);
+                return;
+            }
+        }
+        currentPow.push(this.index);
+    }
     callback(null)
 }
 
 LEDAccessory.prototype.getPowerState = function(callback) {
     var accessory = this;
-    callback(null, currentPow[accessory.index]);
+    for(i in currentPow) {
+        if(currentPow[i] == this.index) {
+            callback(null, 1);
+            return;
+        }
+    }
+    callback(null, 0);
 }
 
 LEDAccessory.prototype.setSaturation = function(saturation, callback) {
@@ -257,7 +286,9 @@ function LEDSpeed(log, name) {
 LEDSpeed.prototype.setPowerState = function(state, callback) {
     var accessory = this;
     accessory.log(accessory.name + " setPow: " + state);
-
+    if(state == 0) {
+        speed = 0;
+    }
     callback(null)
 }
 
@@ -342,16 +373,36 @@ function LEDFunction(log, name, value) {
     var id = uuid.generate('function.' + this.name);
     this.uuid_base = id;
 
-    myEmitter.on('event', (data) => {
+    this.services = [];
+    this.service = new Service.Switch(this.name);
+    var informationService = new Service.AccessoryInformation();
+
+    informationService
+        .setCharacteristic(Characteristic.Manufacturer, 'LED Manufacturer')
+        .setCharacteristic(Characteristic.Model, 'LED Model')
+        .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
+
+    this.services.push(informationService);
+
+    this.service
+        .getCharacteristic(Characteristic.On)
+        .on('set', this.setPowerState.bind(this))
+        .on('get', this.getPowerState.bind(this));
+
+    this.service.subtype = "default";
+    this.services.push(this.service);
+
+    myEmitter.on('event', function (data) {
         this.selfSet = true;
         if(this.value == data) {
-          this.getServices()[1].getCharacteristic(Characteristic.On).setValue(true);
+          this.service.getCharacteristic(Characteristic.On).setValue(true);
         } else {
-          this.getServices()[1].getCharacteristic(Characteristic.On).setValue(true);
+          this.service.getCharacteristic(Characteristic.On).setValue(false);
         }
-    });
-    myEmitter.emit('event');
+    }.bind(this));
 }
+
+
 
 LEDFunction.prototype.setPowerState = function(state, callback) {
     var accessory = this;
@@ -363,6 +414,11 @@ LEDFunction.prototype.setPowerState = function(state, callback) {
     accessory.log(accessory.name + " setPow: " + state);
     setting = accessory.value;
     myEmitter.emit('event', accessory.value);
+    if(state == 0) {
+        for(level in currentLev) {
+            currentLev[level] = 0;
+        }
+    }
     callback(null);
 }
 
@@ -372,20 +428,7 @@ LEDFunction.prototype.getPowerState = function(callback) {
 }
 
 LEDFunction.prototype.getServices = function() {
-    var informationService = new Service.AccessoryInformation();
-    var switchService = new Service.Switch(this.name);
-
-    informationService
-        .setCharacteristic(Characteristic.Manufacturer, 'LED Manufacturer')
-        .setCharacteristic(Characteristic.Model, 'LED Model')
-        .setCharacteristic(Characteristic.SerialNumber, 'LED Serial Number');
-
-    switchService
-        .getCharacteristic(Characteristic.On)
-        .on('set', this.setPowerState.bind(this))
-        .on('get', this.getPowerState.bind(this));
-
-    return [informationService, switchService];
+    return this.services;
 }
 
 
